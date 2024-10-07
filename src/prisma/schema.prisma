@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum PostStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique @db.VarChar(255)
+  email          String   @unique @db.VarChar(255)
+  fullName       String   @map("full_name") @db.VarChar(255)
+  profilePicture String?  @map("profile_picture") @db.VarChar(255)
+  password       String   @db.VarChar(255)
+  role           Role     @default(USER)
+  isActive       Boolean  @default(false) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+  Post           Post[]
+
+  @@map("users")
+}
+
+model Post {
+  id           Int            @id @default(autoincrement())
+  title        String         @db.VarChar(255)
+  content      String
+  status       PostStatus     @default(ACTIVE)
+  author       User           @relation(fields: [userId], references: [id])
+  userId       Int
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  PostCategory PostCategory[]
+
+  @@map("posts")
+}
+
+model Category {
+  id           Int            @id @default(autoincrement())
+  title        String
+  description  String
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  PostCategory PostCategory[]
+
+  @@map("categories")
+}
+
+model PostCategory {
+  postId     Int
+  categoryId Int
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+  @@map("post_categories")
+}
