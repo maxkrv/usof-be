@@ -8,6 +8,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// generator dbml {
+//   provider = "prisma-dbml-generator"
+// }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -24,17 +28,20 @@ enum PostStatus {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  username       String   @unique @db.VarChar(255)
-  email          String   @unique @db.VarChar(255)
-  fullName       String   @map("full_name") @db.VarChar(255)
-  profilePicture String?  @map("profile_picture") @db.VarChar(255)
-  password       String   @db.VarChar(255)
-  role           Role     @default(USER)
-  isActive       Boolean  @default(false) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+  id             Int        @id @default(autoincrement())
+  username       String     @unique @db.VarChar(255)
+  email          String     @unique @db.VarChar(255)
+  fullName       String     @map("full_name") @db.VarChar(255)
+  profilePicture String?    @map("profile_picture") @db.VarChar(255)
+  password       String     @db.VarChar(255)
+  role           Role       @default(USER)
+  isActive       Boolean    @default(false) @map("is_active")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
   Post           Post[]
+  Like           Like[]
+  Comment        Comment[]
+  Category       Category[]
 
   @@map("users")
 }
@@ -45,31 +52,61 @@ model Post {
   content      String
   status       PostStatus     @default(ACTIVE)
   author       User           @relation(fields: [userId], references: [id])
-  userId       Int
+  userId       Int            @map("user_id")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   PostCategory PostCategory[]
+  Like         Like[]
+  Comment      Comment[]
 
   @@map("posts")
 }
 
 model Category {
   id           Int            @id @default(autoincrement())
-  title        String
-  description  String
+  title        String         @db.VarChar(255)
+  description  String         @db.VarChar(255)
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   PostCategory PostCategory[]
+  User         User?          @relation(fields: [userId], references: [id])
+  userId       Int?
 
   @@map("categories")
 }
 
 model PostCategory {
-  postId     Int
-  categoryId Int
+  postId     Int      @map("post_id")
+  categoryId Int      @map("category_id")
   post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([postId, categoryId])
   @@map("post_categories")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  Post      Post     @relation(fields: [postId], references: [id])
+  postId    Int      @map("post_id")
+  User      User     @relation(fields: [userId], references: [id])
+  userId    Int      @map("user_id")
+  Like      Like[]
+
+  @@map("comments")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    Int?     @map("user_id")
+  Post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int?     @map("post_id")
+  Comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId Int?     @map("comment_id")
+
+  @@map("likes")
 }

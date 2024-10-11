@@ -11,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AccessTokenGuard } from './shared/guards/accessToken.guard';
 import { UserGuard } from './shared/guards/userGuard.guard';
+import { PostModule } from './modules/post/post.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { UserGuard } from './shared/guards/userGuard.guard';
     }),
     UserModule,
     AuthModule,
+    PostModule,
   ],
   controllers: [AppController],
   providers: [

@@ -6,7 +6,7 @@ import { Redis } from 'ioredis';
 import { RegisterDto } from './dto/register.dto';
 import { UserService } from '../user/user.service';
 import * as argon2 from 'argon2';
-import { Success } from 'src/shared/interfaces/interface';
+import { SuccessResponse } from 'src/shared/interfaces/interface';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from 'src/shared/services/mail.service';
 import ActivationLink from 'src/emails/activation-link';
@@ -121,7 +121,7 @@ export class AuthService {
     });
   }
 
-  async activateUser(token: string, userId: number): Promise<Success> {
+  async activateUser(token: string, userId: number): Promise<SuccessResponse> {
     const { sub } = await this.jwtService.verifyAsync<{ sub: number }>(token, {
       secret: this.configService.get('JWT_ACTIVE_SECRET'),
     });
@@ -143,7 +143,7 @@ export class AuthService {
     };
   }
 
-  async logout(sub: number, token: string): Promise<Success> {
+  async logout(sub: number, token: string): Promise<SuccessResponse> {
     const { key } = await this.verifyRefreshToken(sub, token);
 
     await this.redis.del(key);
@@ -173,7 +173,7 @@ export class AuthService {
     });
   }
 
-  async sendResetPasswordLink(userId: number): Promise<Success> {
+  async sendResetPasswordLink(userId: number): Promise<SuccessResponse> {
     const user = await this.userService.findById(userId, {
       id: true,
       email: true,
@@ -209,7 +209,7 @@ export class AuthService {
     token,
     password,
     repeatPassword,
-  }: ResetPasswordDto): Promise<Success> {
+  }: ResetPasswordDto): Promise<SuccessResponse> {
     if (password !== repeatPassword) {
       throw new HttpException('Passwords do not match', 400);
     }

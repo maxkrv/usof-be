@@ -16,16 +16,17 @@ export class UserGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
+    const isAdmin = this.reflector.getAllAndOverride('admin', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic && !isAdmin) return true;
 
     const shouldAllowUnActivated = this.reflector.getAllAndOverride(
       'allowNotActivated',
       [context.getHandler(), context.getClass()],
     );
-    const isAdmin = this.reflector.getAllAndOverride('admin', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
 
     const request = context.switchToHttp().getRequest();
     const user = request.user as JwtPayload;
