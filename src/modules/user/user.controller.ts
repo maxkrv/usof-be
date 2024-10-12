@@ -4,9 +4,9 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   ParseFilePipeBuilder,
   Patch,
-  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -31,39 +31,24 @@ export class UserController {
   @AllowNotActivated()
   @Get('me')
   async me(@GetCurrentUserId() userId: number) {
-    return this.userService.findById(userId, {
-      id: true,
-      email: true,
-      username: true,
-      fullName: true,
-      profilePicture: true,
-      isActive: true,
-    });
+    return this.userService.findById(userId, true);
   }
 
   @AllowNotActivated()
   @Get(':id')
-  async getById(@Query('id') id: number) {
+  async getById(@Param('id') id: number) {
     if (!id) throw new HttpException('User not found', 404);
 
-    return this.userService.findById(id, {
-      id: true,
-      email: true,
-      username: true,
-      fullName: true,
-      profilePicture: true,
-    });
+    return this.userService.findById(id);
   }
 
   @Patch()
   async update(@GetCurrentUserId() userId: number, @Body() dto: UpdateUserDto) {
-    return this.userService.update(userId, dto, {
-      id: true,
-      email: true,
-      username: true,
-      fullName: true,
-      profilePicture: true,
-    });
+    await this.userService.update(userId, dto);
+
+    return {
+      success: true,
+    };
   }
 
   @Patch('/avatar')

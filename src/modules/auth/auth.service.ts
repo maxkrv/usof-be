@@ -174,11 +174,16 @@ export class AuthService {
   }
 
   async sendResetPasswordLink(userId: number): Promise<SuccessResponse> {
-    const user = await this.userService.findById(userId, {
-      id: true,
-      email: true,
-      username: true,
-    });
+    const user = await this.userService.findOne(
+      {
+        id: userId,
+      },
+      {
+        id: true,
+        email: true,
+        username: true,
+      },
+    );
 
     if (!user) {
       throw new HttpException('Something went wrong', 400);

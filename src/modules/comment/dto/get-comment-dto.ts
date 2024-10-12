@@ -2,7 +2,7 @@ import { Optional } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsPositive } from 'class-validator';
 
-export class GetPostsDto {
+export class GetCommentDto {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
@@ -18,10 +18,15 @@ export class GetPostsDto {
   order: 'asc' | 'desc';
 
   @Optional()
-  @IsEnum(['createdAt', 'likes', 'comments'])
-  orderBy: 'createdAt' | 'likes' | 'comments';
+  @IsEnum(['createdAt', 'likes'])
+  orderBy: 'createdAt' | 'likes';
 
-  constructor(dto: Partial<GetPostsDto>) {
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  postId: number;
+
+  constructor(dto: Partial<GetCommentDto>) {
     Object.assign(this, dto);
 
     this.limit = this.limit || 10;

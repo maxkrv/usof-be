@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DbService } from 'src/shared/services/db.service';
 import { FileUploadService } from 'src/shared/services/file-upload.service';
+import { MeUserResponse, UserResponse } from './interface/user.interface';
 
 @Injectable()
 export class UserService {
@@ -17,8 +18,59 @@ export class UserService {
     });
   }
 
-  async findById(id: number, select?: Prisma.UserSelect) {
-    return this.dbService.user.findUnique({ where: { id }, select });
+  async findById(
+    id: number,
+    isMe = false,
+  ): Promise<UserResponse | MeUserResponse> {
+    try {
+      const user = await this.dbService.user.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              Like: {
+                where: {
+                  userId: id,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', 404);
+      }
+
+      if (isMe) {
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          profilePicture: user.profilePicture,
+          createdAt: user.createdAt,
+          rating: user._count.Like,
+          isActive: user.isActive,
+          fullName: user.fullName,
+        } satisfies MeUserResponse;
+      } else {
+        return {
+          id: user.id,
+          username: user.username,
+          profilePicture: user.profilePicture,
+          createdAt: user.createdAt,
+          rating: user._count.Like,
+        } satisfies UserResponse;
+      }
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new HttpException('User not found', 404);
+        }
+      }
+
+      throw error;
+    }
   }
 
   async findAll() {

@@ -30,10 +30,15 @@ export class UserGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user = request.user as JwtPayload;
-    const dbUser = await this.userService.findById(user.sub, {
-      isActive: true,
-      role: true,
-    });
+    const dbUser = await this.userService.findOne(
+      {
+        id: user.sub,
+      },
+      {
+        isActive: true,
+        role: true,
+      },
+    );
 
     if (!shouldAllowUnActivated) {
       return dbUser.isActive;
