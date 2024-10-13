@@ -18,8 +18,8 @@ export class GetCommentDto {
   order: 'asc' | 'desc';
 
   @Optional()
-  @IsEnum(['createdAt', 'likes'])
-  orderBy: 'createdAt' | 'likes';
+  @IsEnum(['createdAt', 'rating'])
+  orderBy: 'createdAt' | 'rating';
 
   @IsInt()
   @IsPositive()
@@ -32,6 +32,6 @@ export class GetCommentDto {
     this.limit = this.limit || 10;
     this.page = this.page || 1;
     this.order = this.order || 'desc';
-    this.orderBy = this.orderBy || 'createdAt';
+    this.orderBy = this.orderBy || 'rating';
   }
 }

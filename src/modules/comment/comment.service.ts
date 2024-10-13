@@ -17,29 +17,11 @@ export class CommentService {
     dto: GetCommentDto,
     userId?: number,
   ): Promise<DataWithPagination<CommentResponse>> {
-    const getOrderBy = () => {
-      switch (dto.orderBy) {
-        case 'likes':
-          return {
-            Like: {
-              _count: dto.order,
-            },
-          };
-        default:
-          return { createdAt: dto.order };
-      }
-    };
-
     const comments = await this.dbService.comment.findMany({
       where: {
         postId: dto.postId,
       },
       include: {
-        _count: {
-          select: {
-            Like: true,
-          },
-        },
         User: {
           select: {
             id: true,
@@ -47,9 +29,11 @@ export class CommentService {
             profilePicture: true,
           },
         },
-        ...(userId && { Like: { where: { userId } } }),
+        ...(userId && { Reaction: { where: { userId } } }),
       },
-      orderBy: getOrderBy(),
+      orderBy: {
+        [dto.orderBy]: dto.order,
+      },
       skip: dto.limit * (dto.page - 1),
       take: dto.limit,
     });
@@ -67,8 +51,8 @@ export class CommentService {
         isEdited: comment.isEdited,
         createdAt: comment.createdAt,
         author: comment.User,
-        likes: comment._count.Like,
-        likedByMe: !!comment?.Like?.length,
+        rating: comment.rating,
+        myReaction: comment.Reaction?.[0]?.type || null,
       };
     });
 

@@ -21,12 +21,8 @@ export class PostService {
   ): Promise<DataWithPagination<PostResponse>> {
     const getOrderBy = () => {
       switch (dto.orderBy) {
-        case 'likes':
-          return {
-            Like: {
-              _count: dto.order,
-            },
-          };
+        case 'rating':
+          return { rating: dto.order };
         case 'comments':
           return { Comment: { _count: dto.order } };
         default:
@@ -42,7 +38,6 @@ export class PostService {
       include: {
         _count: {
           select: {
-            Like: true,
             Comment: true,
           },
         },
@@ -52,12 +47,22 @@ export class PostService {
           },
         },
         author: true,
-        ...(userId && { Like: { where: { userId } } }),
+        ...(userId && {
+          Reaction: {
+            where: {
+              userId,
+            },
+            select: {
+              type: true,
+            },
+          },
+        }),
       },
       orderBy: getOrderBy(),
       skip: dto.limit * (dto.page - 1),
       take: dto.limit,
     });
+
     const total = await this.dbService.post.count();
 
     const mappedPosts: PostResponse[] = posts.map((post) => ({
@@ -73,8 +78,8 @@ export class PostService {
         title: category.title,
       })),
       comments: post._count.Comment,
-      likes: post._count.Like,
-      likedByMe: !!post.Like?.length,
+      rating: post.rating,
+      myAction: post.Reaction?.[0]?.type || null,
       createdAt: post.createdAt,
     }));
 
@@ -96,7 +101,6 @@ export class PostService {
       include: {
         _count: {
           select: {
-            Like: true,
             Comment: true,
           },
         },
@@ -106,7 +110,16 @@ export class PostService {
           },
         },
         author: true,
-        ...(userId && { Like: { where: { userId } } }),
+        ...(userId && {
+          Reaction: {
+            where: {
+              userId,
+            },
+            select: {
+              type: true,
+            },
+          },
+        }),
       },
     });
 
@@ -127,8 +140,8 @@ export class PostService {
         title: category.title,
       })),
       comments: post._count.Comment,
-      likes: post._count.Like,
-      likedByMe: !!post.Like?.length,
+      rating: post.rating,
+      myAction: post.Reaction?.[0]?.type || null,
       createdAt: post.createdAt,
     };
 

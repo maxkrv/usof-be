@@ -25,17 +25,6 @@ export class UserService {
     try {
       const user = await this.dbService.user.findUnique({
         where: { id },
-        include: {
-          _count: {
-            select: {
-              Like: {
-                where: {
-                  userId: id,
-                },
-              },
-            },
-          },
-        },
       });
 
       if (!user) {
@@ -49,7 +38,7 @@ export class UserService {
           email: user.email,
           profilePicture: user.profilePicture,
           createdAt: user.createdAt,
-          rating: user._count.Like,
+          rating: user.rating,
           isActive: user.isActive,
           fullName: user.fullName,
         } satisfies MeUserResponse;
@@ -59,7 +48,7 @@ export class UserService {
           username: user.username,
           profilePicture: user.profilePicture,
           createdAt: user.createdAt,
-          rating: user._count.Like,
+          rating: user.rating,
         } satisfies UserResponse;
       }
     } catch (error) {

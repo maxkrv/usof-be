@@ -27,6 +27,11 @@ enum PostStatus {
   INACTIVE
 }
 
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
 model User {
   id             Int        @id @default(autoincrement())
   username       String     @unique @db.VarChar(255)
@@ -36,10 +41,11 @@ model User {
   password       String     @db.VarChar(255)
   role           Role       @default(USER)
   isActive       Boolean    @default(false) @map("is_active")
+  rating         Int        @default(0)
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
   Post           Post[]
-  Like           Like[]
+  Reaction       Reaction[]
   Comment        Comment[]
   Category       Category[]
 
@@ -51,12 +57,13 @@ model Post {
   title        String         @db.VarChar(255)
   content      String
   status       PostStatus     @default(ACTIVE)
+  rating       Int            @default(0)
   author       User           @relation(fields: [userId], references: [id])
   userId       Int            @map("user_id")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   PostCategory PostCategory[]
-  Like         Like[]
+  Reaction     Reaction[]
   Comment      Comment[]
 
   @@map("posts")
@@ -86,28 +93,30 @@ model PostCategory {
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   content   String
-  isEdited  Boolean  @default(false) @map("is_edited")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  Post      Post     @relation(fields: [postId], references: [id])
-  postId    Int      @map("post_id")
-  User      User     @relation(fields: [userId], references: [id])
-  userId    Int      @map("user_id")
-  Like      Like[]
+  isEdited  Boolean    @default(false) @map("is_edited")
+  rating    Int        @default(0)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
+  Post      Post       @relation(fields: [postId], references: [id])
+  postId    Int        @map("post_id")
+  User      User       @relation(fields: [userId], references: [id])
+  userId    Int        @map("user_id")
+  Reaction  Reaction[]
 
   @@map("comments")
 }
 
-model Like {
-  id        Int      @id @default(autoincrement())
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    Int?     @map("user_id")
-  Post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    Int?     @map("post_id")
-  Comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  commentId Int?     @map("comment_id")
+model Reaction {
+  id        Int          @id @default(autoincrement())
+  type      ReactionType
+  User      User?        @relation(fields: [userId], references: [id])
+  userId    Int?         @map("user_id")
+  Post      Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int?         @map("post_id")
+  Comment   Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId Int?         @map("comment_id")
 
-  @@map("likes")
+  @@map("reactions")
 }

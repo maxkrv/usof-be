@@ -1,3 +1,5 @@
+import { ReactionType } from '@prisma/client';
+
 export interface PostResponse {
   id: number;
   title: string;
@@ -7,8 +9,8 @@ export interface PostResponse {
     username: string;
   };
   categories: { id: number; title: string }[];
-  likes: number;
-  likedByMe: boolean;
+  rating: number;
+  myAction: ReactionType | null;
   comments: number;
   createdAt: Date;
 }

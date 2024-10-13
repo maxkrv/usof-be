@@ -1,10 +1,12 @@
+import { ReactionType } from '@prisma/client';
+
 export interface CommentResponse {
   id: number;
   content: string;
   isEdited: boolean;
   createdAt: Date;
-  likes: number;
-  likedByMe: boolean;
+  rating: number;
+  myReaction: ReactionType | null;
   author: {
     id: number;
     username: string;

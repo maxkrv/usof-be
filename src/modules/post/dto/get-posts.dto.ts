@@ -18,8 +18,8 @@ export class GetPostsDto {
   order: 'asc' | 'desc';
 
   @Optional()
-  @IsEnum(['createdAt', 'likes', 'comments'])
-  orderBy: 'createdAt' | 'likes' | 'comments';
+  @IsEnum(['createdAt', 'rating', 'comments'])
+  orderBy: 'createdAt' | 'rating' | 'comments';
 
   constructor(dto: Partial<GetPostsDto>) {
     Object.assign(this, dto);

@@ -13,6 +13,7 @@ import { AccessTokenGuard } from './shared/guards/accessToken.guard';
 import { UserGuard } from './shared/guards/userGuard.guard';
 import { PostModule } from './modules/post/post.module';
 import { CommentModule } from './modules/comment/comment.module';
+import { ReactionModule } from './modules/reaction/reaction.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { CommentModule } from './modules/comment/comment.module';
     AuthModule,
     PostModule,
     CommentModule,
+    ReactionModule,
   ],
   controllers: [AppController],
   providers: [
