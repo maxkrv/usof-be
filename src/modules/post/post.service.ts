@@ -30,40 +30,58 @@ export class PostService {
       }
     };
 
-    const posts = await this.dbService.post.findMany({
-      where: {
-        status: PostStatus.ACTIVE,
-        ...(includeUserId && { author: { id: userId } }),
-      },
-      include: {
-        _count: {
-          select: {
-            Comment: true,
-          },
-        },
-        PostCategory: {
-          select: {
-            category: true,
-          },
-        },
-        author: true,
-        ...(userId && {
-          Reaction: {
-            where: {
-              userId,
+    const [posts, total] = await this.dbService.$transaction([
+      this.dbService.post.findMany({
+        where: {
+          status: PostStatus.ACTIVE,
+          ...(includeUserId && { author: { id: userId } }),
+          ...(dto.categoryId && {
+            PostCategory: {
+              some: {
+                category: {
+                  id: dto.categoryId,
+                },
+              },
             },
+          }),
+        },
+        include: {
+          _count: {
             select: {
-              type: true,
+              Comment: true,
             },
           },
-        }),
-      },
-      orderBy: getOrderBy(),
-      skip: dto.limit * (dto.page - 1),
-      take: dto.limit,
-    });
-
-    const total = await this.dbService.post.count();
+          PostCategory: {
+            select: {
+              category: true,
+            },
+          },
+          author: true,
+          ...(userId && {
+            Reaction: {
+              where: {
+                userId,
+              },
+              select: {
+                type: true,
+              },
+            },
+          }),
+        },
+        orderBy: getOrderBy(),
+        skip: dto.limit * (dto.page - 1),
+        take: dto.limit,
+      }),
+      this.dbService.post.count({
+        where: {
+          status: PostStatus.ACTIVE,
+          ...(includeUserId && { author: { id: userId } }),
+          ...(dto.categoryId && {
+            PostCategory: { some: { category: { id: dto.categoryId } } },
+          }),
+        },
+      }),
+    ]);
 
     const mappedPosts: PostResponse[] = posts.map((post) => ({
       id: post.id,

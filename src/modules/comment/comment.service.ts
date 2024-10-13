@@ -17,32 +17,34 @@ export class CommentService {
     dto: GetCommentDto,
     userId?: number,
   ): Promise<DataWithPagination<CommentResponse>> {
-    const comments = await this.dbService.comment.findMany({
-      where: {
-        postId: dto.postId,
-      },
-      include: {
-        User: {
-          select: {
-            id: true,
-            username: true,
-            profilePicture: true,
-          },
+    const [comments, total] = await this.dbService.$transaction([
+      this.dbService.comment.findMany({
+        where: {
+          postId: dto.postId,
         },
-        ...(userId && { Reaction: { where: { userId } } }),
-      },
-      orderBy: {
-        [dto.orderBy]: dto.order,
-      },
-      skip: dto.limit * (dto.page - 1),
-      take: dto.limit,
-    });
+        include: {
+          User: {
+            select: {
+              id: true,
+              username: true,
+              profilePicture: true,
+            },
+          },
+          ...(userId && { Reaction: { where: { userId } } }),
+        },
+        orderBy: {
+          [dto.orderBy]: dto.order,
+        },
+        skip: dto.limit * (dto.page - 1),
+        take: dto.limit,
+      }),
 
-    const total = await this.dbService.comment.count({
-      where: {
-        postId: dto.postId,
-      },
-    });
+      this.dbService.comment.count({
+        where: {
+          postId: dto.postId,
+        },
+      }),
+    ]);
 
     const mappedComments: CommentResponse[] = comments.map((comment) => {
       return {

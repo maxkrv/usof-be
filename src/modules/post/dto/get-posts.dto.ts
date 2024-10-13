@@ -1,6 +1,5 @@
-import { Optional } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsPositive } from 'class-validator';
+import { IsEnum, IsInt, IsPositive, IsOptional } from 'class-validator';
 
 export class GetPostsDto {
   @IsInt()
@@ -13,13 +12,18 @@ export class GetPostsDto {
   @Type(() => Number)
   page: number;
 
-  @Optional()
+  @IsOptional()
   @IsEnum(['asc', 'desc'])
   order: 'asc' | 'desc';
 
-  @Optional()
+  @IsOptional()
   @IsEnum(['createdAt', 'rating', 'comments'])
   orderBy: 'createdAt' | 'rating' | 'comments';
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  categoryId?: number;
 
   constructor(dto: Partial<GetPostsDto>) {
     Object.assign(this, dto);
@@ -28,5 +32,6 @@ export class GetPostsDto {
     this.page = this.page || 1;
     this.order = this.order || 'desc';
     this.orderBy = this.orderBy || 'createdAt';
+    this.categoryId = this.categoryId || undefined;
   }
 }
