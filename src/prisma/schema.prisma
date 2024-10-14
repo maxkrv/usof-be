@@ -22,7 +22,7 @@ enum Role {
   ADMIN
 }
 
-enum PostStatus {
+enum ContentStatus {
   ACTIVE
   INACTIVE
 }
@@ -47,7 +47,6 @@ model User {
   Post           Post[]
   Reaction       Reaction[]
   Comment        Comment[]
-  Category       Category[]
 
   @@map("users")
 }
@@ -56,7 +55,8 @@ model Post {
   id           Int            @id @default(autoincrement())
   title        String         @db.VarChar(255)
   content      String
-  status       PostStatus     @default(ACTIVE)
+  status       ContentStatus  @default(ACTIVE)
+  isBlocked    Boolean        @default(false) @map("is_blocked")
   rating       Int            @default(0)
   author       User           @relation(fields: [userId], references: [id])
   userId       Int            @map("user_id")
@@ -76,8 +76,6 @@ model Category {
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   PostCategory PostCategory[]
-  User         User?          @relation(fields: [userId], references: [id])
-  userId       Int?
 
   @@map("categories")
 }
@@ -93,16 +91,17 @@ model PostCategory {
 }
 
 model Comment {
-  id        Int        @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   content   String
-  isEdited  Boolean    @default(false) @map("is_edited")
-  rating    Int        @default(0)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
-  Post      Post       @relation(fields: [postId], references: [id])
-  postId    Int        @map("post_id")
-  User      User       @relation(fields: [userId], references: [id])
-  userId    Int        @map("user_id")
+  isEdited  Boolean       @default(false) @map("is_edited")
+  status    ContentStatus @default(ACTIVE)
+  rating    Int           @default(0)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
+  Post      Post          @relation(fields: [postId], references: [id])
+  postId    Int           @map("post_id")
+  User      User          @relation(fields: [userId], references: [id])
+  userId    Int           @map("user_id")
   Reaction  Reaction[]
 
   @@map("comments")

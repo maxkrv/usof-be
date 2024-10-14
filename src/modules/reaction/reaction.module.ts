@@ -6,5 +6,6 @@ import { DbService } from 'src/shared/services/db.service';
 @Module({
   controllers: [ReactionController],
   providers: [DbService, ReactionService],
+  exports: [ReactionService],
 })
 export class ReactionModule {}

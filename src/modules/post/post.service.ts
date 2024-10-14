@@ -6,7 +6,7 @@ import {
 import { DbService } from 'src/shared/services/db.service';
 import { PostResponse } from './interface/post.interface';
 import { GetPostsDto } from './dto/get-posts.dto';
-import { PostStatus, Prisma } from '@prisma/client';
+import { ContentStatus, Prisma } from '@prisma/client';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 
@@ -33,7 +33,8 @@ export class PostService {
     const [posts, total] = await this.dbService.$transaction([
       this.dbService.post.findMany({
         where: {
-          status: PostStatus.ACTIVE,
+          isBlocked: false,
+          ...(!includeUserId && { status: ContentStatus.ACTIVE }),
           ...(includeUserId && { author: { id: userId } }),
           ...(dto.categoryId && {
             PostCategory: {
@@ -74,7 +75,8 @@ export class PostService {
       }),
       this.dbService.post.count({
         where: {
-          status: PostStatus.ACTIVE,
+          status: ContentStatus.ACTIVE,
+          isBlocked: false,
           ...(includeUserId && { author: { id: userId } }),
           ...(dto.categoryId && {
             PostCategory: { some: { category: { id: dto.categoryId } } },
@@ -114,7 +116,8 @@ export class PostService {
     const post = await this.dbService.post.findFirst({
       where: {
         id: id,
-        status: PostStatus.ACTIVE,
+        status: ContentStatus.ACTIVE,
+        isBlocked: false,
       },
       include: {
         _count: {
@@ -167,54 +170,93 @@ export class PostService {
   }
 
   async create(dto: CreatePostDto, userId: number) {
-    const post = await this.dbService.post.create({
-      data: {
-        title: dto.title,
-        content: dto.content,
-        author: { connect: { id: userId } },
-      },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        author: {
+    try {
+      await this.dbService.$transaction(async (tx) => {
+        const post = await tx.post.create({
+          data: {
+            title: dto.title,
+            content: dto.content,
+            author: { connect: { id: userId } },
+          },
           select: {
             id: true,
-            username: true,
+            title: true,
+            content: true,
+            author: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+            createdAt: true,
           },
-        },
-        createdAt: true,
-      },
-    });
+        });
 
-    return post;
+        return await tx.postCategory.createMany({
+          data: dto.categoryIds.map((categoryId) => ({
+            postId: post.id,
+            categoryId,
+          })),
+        });
+      });
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2003') {
+          throw new HttpException('Category not found', 404);
+        }
+      }
+    }
   }
 
   async update(id: number, dto: UpdatePostDto, userId: number) {
     try {
-      const post = await this.dbService.post.update({
-        where: {
-          id,
-          author: {
-            id: userId,
-          },
-        },
-        data: dto,
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          author: {
-            select: {
-              id: true,
-              username: true,
+      await this.dbService.$transaction(async (tx) => {
+        await tx.post.update({
+          where: {
+            id,
+            author: {
+              id: userId,
             },
           },
-          createdAt: true,
-        },
+          data: {
+            title: dto.title,
+            content: dto.content,
+          },
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            author: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+            createdAt: true,
+          },
+        });
+
+        await tx.postCategory.deleteMany({
+          where: {
+            postId: id,
+          },
+        });
+
+        await tx.postCategory.createMany({
+          data: dto.categoryIds.map((categoryId) => ({
+            postId: id,
+            categoryId,
+          })),
+        });
       });
 
-      return post;
+      return {
+        success: true,
+      };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
@@ -234,6 +276,7 @@ export class PostService {
           author: {
             id: userId,
           },
+          isBlocked: false,
         },
       });
 

@@ -13,6 +13,10 @@ export class ReactionService {
     { type }: LikeDto,
     isForPost = true,
   ) {
+    console.log(
+      '🚀 ~ file: reaction.service.ts:24 ~ ReactionService ~ { type }:',
+      { type },
+    );
     const getRatingAction = (exists: any) => {
       let ratingValue: number = 0;
 
@@ -35,7 +39,7 @@ export class ReactionService {
       };
     };
 
-    await this.dbService.$transaction(async (tx) => {
+    return await this.dbService.$transaction(async (tx) => {
       const exists = await tx.reaction.findFirst({
         where: {
           userId,
@@ -69,8 +73,9 @@ export class ReactionService {
         throw new HttpException('Already disliked', 400);
       }
 
+      let reactionId: number | null = null;
       if (exists) {
-        await tx.reaction.update({
+        const reaction = await tx.reaction.update({
           where: {
             id: exists.id,
           },
@@ -78,8 +83,10 @@ export class ReactionService {
             type,
           },
         });
+
+        reactionId = reaction.id;
       } else {
-        await tx.reaction.create({
+        const reaction = await tx.reaction.create({
           data: {
             userId: userId,
             ...(isForPost
@@ -92,6 +99,8 @@ export class ReactionService {
             type,
           },
         });
+
+        reactionId = reaction.id;
       }
 
       let entitiesUserId: null | number = null;
@@ -135,11 +144,12 @@ export class ReactionService {
           rating: getRatingAction(exists),
         },
       });
-    });
 
-    return {
-      success: true,
-    };
+      return {
+        success: true,
+        id: reactionId,
+      };
+    });
   }
 
   async delete(userId: number, entityId: number, isForPost = true) {
@@ -205,7 +215,7 @@ export class ReactionService {
 
       await tx.reaction.delete({
         where: {
-          id: entityId,
+          id: exists.id,
         },
       });
     });

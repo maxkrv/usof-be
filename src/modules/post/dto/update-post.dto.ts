@@ -1,5 +1,12 @@
-import { PostStatus } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 
 export class UpdatePostDto {
   @IsOptional()
@@ -13,7 +20,9 @@ export class UpdatePostDto {
   content: string;
 
   @IsOptional()
-  @IsNotEmpty()
-  @IsEnum(['ACTIVE', 'INACTIVE'])
-  status: PostStatus;
+  @IsArray()
+  @IsInt({ each: true })
+  @IsPositive({ each: true })
+  @ArrayNotEmpty()
+  categoryIds: number[];
 }

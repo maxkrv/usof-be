@@ -8,6 +8,7 @@ import {
 import { CommentResponse } from './interface/comment.interface';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { ContentStatus } from '@prisma/client';
 
 @Injectable()
 export class CommentService {
@@ -21,6 +22,7 @@ export class CommentService {
       this.dbService.comment.findMany({
         where: {
           postId: dto.postId,
+          status: ContentStatus.ACTIVE,
         },
         include: {
           User: {
@@ -107,5 +109,14 @@ export class CommentService {
     });
 
     return { success: true };
+  }
+
+  findById(id: number) {
+    return this.dbService.comment.findFirst({
+      where: {
+        id,
+        status: ContentStatus.ACTIVE,
+      },
+    });
   }
 }

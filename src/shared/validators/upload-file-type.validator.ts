@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { FileValidator } from '@nestjs/common';
-import * as fileType from 'file-type-mime';
+
+const fileType = require('file-type-mime');
 
 interface UploadFileTypeValidatorOptions {
   fileType: string[];

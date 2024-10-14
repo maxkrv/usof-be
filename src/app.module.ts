@@ -14,6 +14,7 @@ import { UserGuard } from './shared/guards/userGuard.guard';
 import { PostModule } from './modules/post/post.module';
 import { CommentModule } from './modules/comment/comment.module';
 import { ReactionModule } from './modules/reaction/reaction.module';
+import AdminModule from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -45,6 +46,10 @@ import { ReactionModule } from './modules/reaction/reaction.module';
         AWS_SECRET_KEY: Joi.string().required(),
         AWS_REGION: Joi.string().required(),
         AWS_BUCKET: Joi.string().required(),
+        // ADMIN
+        ADMIN_COOKIE_NAME: Joi.string().required(),
+        ADMIN_COOKIE_PASSWORD: Joi.string().required(),
+        ADMIN_SESSION_SECRET: Joi.string().required(),
       }),
     }),
     LoggerModule,
@@ -62,6 +67,7 @@ import { ReactionModule } from './modules/reaction/reaction.module';
         };
       },
     }),
+    AdminModule,
     UserModule,
     AuthModule,
     PostModule,
