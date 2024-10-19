@@ -1,6 +1,7 @@
 import {
   ArrayNotEmpty,
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -25,4 +26,8 @@ export class UpdatePostDto {
   @IsPositive({ each: true })
   @ArrayNotEmpty()
   categoryIds: number[];
+
+  @IsOptional()
+  @IsEnum(['ACTIVE', 'INACTIVE'])
+  status: 'ACTIVE' | 'INACTIVE';
 }

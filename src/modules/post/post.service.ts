@@ -35,6 +35,7 @@ export class PostService {
         where: {
           isBlocked: false,
           ...(!includeUserId && { status: ContentStatus.ACTIVE }),
+          ...(includeUserId && dto.status && { status: dto.status }),
           ...(includeUserId && { author: { id: userId } }),
           ...(dto.categoryId && {
             PostCategory: {
@@ -43,6 +44,12 @@ export class PostService {
                   id: dto.categoryId,
                 },
               },
+            },
+          }),
+          ...((dto.fromDate || dto.toDate) && {
+            createdAt: {
+              gte: dto.fromDate,
+              lte: dto.toDate,
             },
           }),
         },
@@ -61,7 +68,9 @@ export class PostService {
           ...(userId && {
             Reaction: {
               where: {
-                userId,
+                User: {
+                  id: userId,
+                },
               },
               select: {
                 type: true,
@@ -75,11 +84,18 @@ export class PostService {
       }),
       this.dbService.post.count({
         where: {
-          status: ContentStatus.ACTIVE,
+          ...(!includeUserId && { status: ContentStatus.ACTIVE }),
           isBlocked: false,
           ...(includeUserId && { author: { id: userId } }),
+          ...(includeUserId && dto.status && { status: dto.status }),
           ...(dto.categoryId && {
             PostCategory: { some: { category: { id: dto.categoryId } } },
+          }),
+          ...((dto.fromDate || dto.toDate) && {
+            createdAt: {
+              gte: dto.fromDate,
+              lte: dto.toDate,
+            },
           }),
         },
       }),
@@ -92,6 +108,7 @@ export class PostService {
       author: {
         id: post.author.id,
         username: post.author.username,
+        profilePicture: post.author.profilePicture,
       },
       categories: post.PostCategory.map(({ category }) => ({
         id: category.id,
@@ -101,6 +118,9 @@ export class PostService {
       rating: post.rating,
       myAction: post.Reaction?.[0]?.type || null,
       createdAt: post.createdAt,
+      ...(includeUserId && {
+        status: post.status,
+      }),
     }));
 
     return {
@@ -155,6 +175,7 @@ export class PostService {
       author: {
         id: post.author.id,
         username: post.author.username,
+        profilePicture: post.author.profilePicture,
       },
       categories: post.PostCategory.map(({ category }) => ({
         id: category.id,
@@ -171,7 +192,7 @@ export class PostService {
 
   async create(dto: CreatePostDto, userId: number) {
     try {
-      await this.dbService.$transaction(async (tx) => {
+      const post = await this.dbService.$transaction(async (tx) => {
         const post = await tx.post.create({
           data: {
             title: dto.title,
@@ -186,21 +207,27 @@ export class PostService {
               select: {
                 id: true,
                 username: true,
+                profilePicture: true,
               },
             },
             createdAt: true,
           },
         });
 
-        return await tx.postCategory.createMany({
+        await tx.postCategory.createMany({
           data: dto.categoryIds.map((categoryId) => ({
             postId: post.id,
             categoryId,
           })),
         });
+
+        return post;
       });
 
       return {
+        data: {
+          id: post.id,
+        },
         success: true,
       };
     } catch (error) {
@@ -214,8 +241,8 @@ export class PostService {
 
   async update(id: number, dto: UpdatePostDto, userId: number) {
     try {
-      await this.dbService.$transaction(async (tx) => {
-        await tx.post.update({
+      const post = await this.dbService.$transaction(async (tx) => {
+        const post = await tx.post.update({
           where: {
             id,
             author: {
@@ -225,6 +252,7 @@ export class PostService {
           data: {
             title: dto.title,
             content: dto.content,
+            status: dto.status,
           },
           select: {
             id: true,
@@ -252,10 +280,15 @@ export class PostService {
             categoryId,
           })),
         });
+
+        return post;
       });
 
       return {
         success: true,
+        data: {
+          id: post.id,
+        },
       };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {

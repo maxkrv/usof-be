@@ -1,4 +1,4 @@
-import { ReactionType } from '@prisma/client';
+import { ContentStatus, ReactionType } from '@prisma/client';
 
 export interface PostResponse {
   id: number;
@@ -7,10 +7,12 @@ export interface PostResponse {
   author: {
     id: number;
     username: string;
+    profilePicture: string | null;
   };
   categories: { id: number; title: string }[];
   rating: number;
   myAction: ReactionType | null;
+  status?: ContentStatus;
   comments: number;
   createdAt: Date;
 }

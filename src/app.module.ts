@@ -15,6 +15,7 @@ import { PostModule } from './modules/post/post.module';
 import { CommentModule } from './modules/comment/comment.module';
 import { ReactionModule } from './modules/reaction/reaction.module';
 import AdminModule from './modules/admin/admin.module';
+import { CategoryModule } from './modules/category/category.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import AdminModule from './modules/admin/admin.module';
     PostModule,
     CommentModule,
     ReactionModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [

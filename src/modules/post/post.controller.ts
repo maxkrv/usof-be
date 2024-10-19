@@ -29,6 +29,14 @@ export class PostController {
     return this.postService.findAll(userId, dto);
   }
 
+  @Get('me')
+  async getMyPosts(
+    @Query() dto: GetPostsDto,
+    @GetCurrentUserId() userId: number,
+  ) {
+    return this.postService.findAll(userId, dto, true);
+  }
+
   @Public()
   @Get(':id')
   async getById(@Param('id') id: number, @GetCurrentUserId() userId: number) {
@@ -41,14 +49,6 @@ export class PostController {
     }
 
     return post;
-  }
-
-  @Get('me')
-  async getMyPosts(
-    @Query() dto: GetPostsDto,
-    @GetCurrentUserId() userId: number,
-  ) {
-    return this.postService.findAll(userId, dto, true);
   }
 
   @Post()
