@@ -16,7 +16,7 @@ import { JwtPayloadWithRefresh } from './interface/jwt.interface';
 import { AllowNotActivated } from 'src/shared/decorators/allow-not-activated.decorator';
 import { AccessTokenGuard } from 'src/shared/guards/accessToken.guard';
 import { GetCurrentUserId } from 'src/shared/decorators/get-current-user-id.decorator';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailDto, ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -64,13 +64,13 @@ export class AuthController {
     return this.authService.refreshToken(payload.sub, payload.refreshToken);
   }
 
-  @UseGuards(AccessTokenGuard)
+  @Public()
   @Post('send-reset-password-link')
-  async sendResetPasswordLink(@GetCurrentUserId() userId: number) {
-    return this.authService.sendResetPasswordLink(userId);
+  async sendResetPasswordLink(@Body() { email }: EmailDto) {
+    return this.authService.sendResetPasswordLink(email);
   }
 
-  @UseGuards(AccessTokenGuard)
+  @Public()
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(body);

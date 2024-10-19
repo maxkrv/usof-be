@@ -173,10 +173,10 @@ export class AuthService {
     });
   }
 
-  async sendResetPasswordLink(userId: number): Promise<SuccessResponse> {
+  async sendResetPasswordLink(email: string): Promise<SuccessResponse> {
     const user = await this.userService.findOne(
       {
-        id: userId,
+        email,
       },
       {
         id: true,
@@ -190,7 +190,7 @@ export class AuthService {
     }
 
     const token = await this.jwtService.signAsync(
-      { sub: userId },
+      { sub: user.id },
       {
         secret: this.configService.get('JWT_RESET_SECRET'),
       },
