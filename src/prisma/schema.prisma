@@ -47,6 +47,7 @@ model User {
   Post           Post[]
   Reaction       Reaction[]
   Comment        Comment[]
+  Favorite       Favorite[]
 
   @@map("users")
 }
@@ -65,6 +66,7 @@ model Post {
   PostCategory PostCategory[]
   Reaction     Reaction[]
   Comment      Comment[]
+  Favorite     Favorite[]
 
   @@map("posts")
 }
@@ -88,6 +90,16 @@ model PostCategory {
 
   @@id([postId, categoryId])
   @@map("post_categories")
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  Post      Post     @relation(fields: [postId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@map("favorites")
 }
 
 model Comment {

@@ -326,4 +326,166 @@ export class PostService {
       throw error;
     }
   }
+
+  async findFavorites(
+    userId: number,
+    dto: GetPostsDto,
+  ): Promise<DataWithPagination<PostResponse>> {
+    const [posts, total] = await this.dbService.$transaction([
+      this.dbService.post.findMany({
+        where: {
+          isBlocked: false,
+          status: ContentStatus.ACTIVE,
+          Favorite: {
+            some: {
+              userId,
+            },
+          },
+        },
+        include: {
+          _count: {
+            select: {
+              Comment: true,
+            },
+          },
+          PostCategory: {
+            select: {
+              category: true,
+            },
+          },
+          author: true,
+          ...(userId && {
+            Reaction: {
+              where: {
+                User: {
+                  id: userId,
+                },
+              },
+              select: {
+                type: true,
+              },
+            },
+          }),
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: dto.limit * (dto.page - 1),
+        take: dto.limit,
+      }),
+      this.dbService.post.count({
+        where: {
+          isBlocked: false,
+          status: ContentStatus.ACTIVE,
+          Favorite: {
+            some: {
+              userId,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const mappedPosts: PostResponse[] = posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      author: {
+        id: post.author.id,
+        username: post.author.username,
+        profilePicture: post.author.profilePicture,
+      },
+      categories: post.PostCategory.map(({ category }) => ({
+        id: category.id,
+        title: category.title,
+      })),
+      comments: post._count.Comment,
+      rating: post.rating,
+      myAction: post.Reaction?.[0]?.type || null,
+      createdAt: post.createdAt,
+    }));
+
+    return {
+      data: mappedPosts,
+      pagination: {
+        page: dto.page,
+        total,
+      },
+    };
+  }
+
+  async setFavorite(userId: number, postId: number) {
+    await this.dbService.$transaction(async (tx) => {
+      const post = await tx.post.findFirst({
+        where: {
+          id: postId,
+          isBlocked: false,
+          status: ContentStatus.ACTIVE,
+        },
+      });
+
+      if (!post) {
+        throw new HttpException('Post not found', 404);
+      }
+
+      const exists = await tx.favorite.findFirst({
+        where: {
+          postId,
+          userId,
+        },
+      });
+
+      if (exists) {
+        throw new HttpException('Already favorited', 400);
+      }
+
+      tx.favorite.create({
+        data: {
+          postId,
+          userId,
+        },
+      });
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+  async removeFavorite(userId: number, postId: number) {
+    await this.dbService.$transaction(async (tx) => {
+      const post = await tx.post.findFirst({
+        where: {
+          id: postId,
+          isBlocked: false,
+          status: ContentStatus.ACTIVE,
+        },
+      });
+
+      if (!post) {
+        throw new HttpException('Post not found', 404);
+      }
+
+      const exists = await tx.favorite.findFirst({
+        where: {
+          postId,
+          userId,
+        },
+      });
+
+      if (!exists) {
+        throw new HttpException('Not favorited', 400);
+      }
+
+      tx.favorite.delete({
+        where: {
+          id: exists.id,
+        },
+      });
+    });
+
+    return {
+      success: true,
+    };
+  }
 }

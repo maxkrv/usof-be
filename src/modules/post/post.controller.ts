@@ -29,6 +29,33 @@ export class PostController {
     return this.postService.findAll(userId, dto);
   }
 
+  @Public()
+  @Get('favorites')
+  async getFavoritePosts(
+    @GetCurrentUserId() userId: number,
+    @Query() dto: GetPostsDto,
+  ) {
+    if (!userId) return [];
+
+    return this.postService.findFavorites(userId, dto);
+  }
+
+  @Post('favorites/:id')
+  async setFavorite(
+    @GetCurrentUserId() userId: number,
+    @Param('id') postId: number,
+  ) {
+    return this.postService.setFavorite(userId, postId);
+  }
+
+  @Delete('favorites/:id')
+  async removeFavorite(
+    @GetCurrentUserId() userId: number,
+    @Param('id') postId: number,
+  ) {
+    return this.postService.removeFavorite(userId, postId);
+  }
+
   @Get('me')
   async getMyPosts(
     @Query() dto: GetPostsDto,
