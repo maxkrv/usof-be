@@ -25,6 +25,7 @@
     "@adminjs/express": "^6.1.0",
     "@adminjs/nestjs": "^6.1.0",
     "@adminjs/prisma": "^5.0.3",
+    "@faker-js/faker": "^9.0.3",
     "@liaoliaots/nestjs-redis": "^10.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
@@ -103,7 +104,8 @@
     "testEnvironment": "node"
   },
   "prisma": {
-    "schema": "src/prisma/schema.prisma"
+    "schema": "src/prisma/schema.prisma",
+    "seed": "ts-node src/prisma/seed.ts"
   },
   "resolutions": {
     "wrap-ansi": "7.0.0",

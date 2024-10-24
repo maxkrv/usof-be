@@ -13,10 +13,6 @@ export class ReactionService {
     { type }: LikeDto,
     isForPost = true,
   ) {
-    console.log(
-      '🚀 ~ file: reaction.service.ts:24 ~ ReactionService ~ { type }:',
-      { type },
-    );
     const getRatingAction = (exists: any) => {
       let ratingValue: number = 0;
 
