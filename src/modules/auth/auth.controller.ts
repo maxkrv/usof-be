@@ -48,6 +48,7 @@ export class AuthController {
     return this.authService.activateUser(token, userId);
   }
 
+  @AllowNotActivated()
   @UseGuards(RefreshTokenGuard)
   @Post('logout')
   async logout(@GetCurrentUser() payload: JwtPayloadWithRefresh) {
@@ -58,6 +59,7 @@ export class AuthController {
     return this.authService.logout(payload.sub, payload.refreshToken);
   }
 
+  @AllowNotActivated()
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
   async refresh(@GetCurrentUser() payload: JwtPayloadWithRefresh) {

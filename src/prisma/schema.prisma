@@ -74,7 +74,6 @@ model Post {
 model Category {
   id           Int            @id @default(autoincrement())
   title        String         @db.VarChar(255)
-  description  String         @db.VarChar(255)
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   PostCategory PostCategory[]
@@ -96,8 +95,8 @@ model Favorite {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")
   postId    Int      @map("post_id")
-  Post      Post     @relation(fields: [postId], references: [id])
-  User      User     @relation(fields: [userId], references: [id])
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("favorites")
 }
@@ -110,9 +109,9 @@ model Comment {
   rating    Int           @default(0)
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
-  Post      Post          @relation(fields: [postId], references: [id])
+  Post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int           @map("post_id")
-  User      User          @relation(fields: [userId], references: [id])
+  User      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int           @map("user_id")
   Reaction  Reaction[]
 

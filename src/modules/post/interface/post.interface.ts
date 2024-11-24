@@ -12,6 +12,7 @@ export interface PostResponse {
   categories: { id: number; title: string }[];
   rating: number;
   myAction: ReactionType | null;
+  favorite: boolean;
   status?: ContentStatus;
   comments: number;
   createdAt: Date;

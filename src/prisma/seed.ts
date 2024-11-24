@@ -157,11 +157,11 @@ const main = async () => {
 
   await prisma.category.createMany({
     data: [
-      { title: 'General', description: 'General category' },
-      { title: 'Programming', description: 'Programming category' },
-      { title: 'Music', description: 'Music category' },
-      { title: 'Art', description: 'Art category' },
-      { title: 'Food', description: 'Food category' },
+      { title: 'General' },
+      { title: 'Programming' },
+      { title: 'Music' },
+      { title: 'Art' },
+      { title: 'Food' },
     ],
   });
   const categories = await prisma.category

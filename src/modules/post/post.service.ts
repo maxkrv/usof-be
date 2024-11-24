@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   DataWithPagination,
   SuccessResponse,
@@ -15,7 +15,7 @@ export class PostService {
   constructor(private readonly dbService: DbService) {}
 
   async findAll(
-    userId: number,
+    authUserId: number,
     dto: GetPostsDto,
     includeUserId = false,
   ): Promise<DataWithPagination<PostResponse>> {
@@ -26,7 +26,7 @@ export class PostService {
         case 'comments':
           return { Comment: { _count: dto.order } };
         default:
-          return { createdAt: dto.order };
+          return { id: dto.order };
       }
     };
 
@@ -34,9 +34,12 @@ export class PostService {
       this.dbService.post.findMany({
         where: {
           isBlocked: false,
+          author: {
+            id: dto.userId,
+          },
           ...(!includeUserId && { status: ContentStatus.ACTIVE }),
           ...(includeUserId && dto.status && { status: dto.status }),
-          ...(includeUserId && { author: { id: userId } }),
+          ...(includeUserId && { author: { id: authUserId } }),
           ...(dto.categoryId && {
             PostCategory: {
               some: {
@@ -65,11 +68,11 @@ export class PostService {
             },
           },
           author: true,
-          ...(userId && {
+          ...(authUserId && {
             Reaction: {
               where: {
                 User: {
-                  id: userId,
+                  id: authUserId,
                 },
               },
               select: {
@@ -77,6 +80,7 @@ export class PostService {
               },
             },
           }),
+          ...(authUserId && { Favorite: { where: { userId: authUserId } } }),
         },
         orderBy: getOrderBy(),
         skip: dto.limit * (dto.page - 1),
@@ -84,9 +88,12 @@ export class PostService {
       }),
       this.dbService.post.count({
         where: {
+          author: {
+            id: dto.userId,
+          },
           ...(!includeUserId && { status: ContentStatus.ACTIVE }),
           isBlocked: false,
-          ...(includeUserId && { author: { id: userId } }),
+          ...(includeUserId && { author: { id: authUserId } }),
           ...(includeUserId && dto.status && { status: dto.status }),
           ...(dto.categoryId && {
             PostCategory: { some: { category: { id: dto.categoryId } } },
@@ -117,6 +124,7 @@ export class PostService {
       comments: post._count.Comment,
       rating: post.rating,
       myAction: post.Reaction?.[0]?.type || null,
+      favorite: post.Favorite?.length > 0,
       createdAt: post.createdAt,
       ...(includeUserId && {
         status: post.status,
@@ -136,7 +144,6 @@ export class PostService {
     const post = await this.dbService.post.findFirst({
       where: {
         id: id,
-        status: ContentStatus.ACTIVE,
         isBlocked: false,
       },
       include: {
@@ -161,11 +168,18 @@ export class PostService {
             },
           },
         }),
+        ...(userId && { Favorite: { where: { userId } } }),
       },
     });
 
+    const isUserAuthor = post?.author.id === userId;
+
     if (!post) {
       return null;
+    }
+
+    if (post.status === ContentStatus.INACTIVE && !isUserAuthor) {
+      throw new NotFoundException('Post not found');
     }
 
     const mappedPost: PostResponse = {
@@ -184,7 +198,9 @@ export class PostService {
       comments: post._count.Comment,
       rating: post.rating,
       myAction: post.Reaction?.[0]?.type || null,
+      favorite: post.Favorite?.length > 0,
       createdAt: post.createdAt,
+      ...(isUserAuthor && { status: post.status }),
     };
 
     return mappedPost;
@@ -328,8 +344,9 @@ export class PostService {
   }
 
   async findFavorites(
-    userId: number,
+    authUserId: number,
     dto: GetPostsDto,
+    includeUserId = false,
   ): Promise<DataWithPagination<PostResponse>> {
     const [posts, total] = await this.dbService.$transaction([
       this.dbService.post.findMany({
@@ -338,9 +355,15 @@ export class PostService {
           status: ContentStatus.ACTIVE,
           Favorite: {
             some: {
-              userId,
+              userId: authUserId,
             },
           },
+          ...((dto.fromDate || dto.toDate) && {
+            createdAt: {
+              gte: dto.fromDate,
+              lte: dto.toDate,
+            },
+          }),
         },
         include: {
           _count: {
@@ -354,11 +377,11 @@ export class PostService {
             },
           },
           author: true,
-          ...(userId && {
+          ...(authUserId && {
             Reaction: {
               where: {
                 User: {
-                  id: userId,
+                  id: authUserId,
                 },
               },
               select: {
@@ -366,9 +389,7 @@ export class PostService {
               },
             },
           }),
-        },
-        orderBy: {
-          createdAt: 'desc',
+          ...(authUserId && { Favorite: { where: { userId: authUserId } } }),
         },
         skip: dto.limit * (dto.page - 1),
         take: dto.limit,
@@ -379,9 +400,15 @@ export class PostService {
           status: ContentStatus.ACTIVE,
           Favorite: {
             some: {
-              userId,
+              userId: authUserId,
             },
           },
+          ...((dto.fromDate || dto.toDate) && {
+            createdAt: {
+              gte: dto.fromDate,
+              lte: dto.toDate,
+            },
+          }),
         },
       }),
     ]);
@@ -402,7 +429,11 @@ export class PostService {
       comments: post._count.Comment,
       rating: post.rating,
       myAction: post.Reaction?.[0]?.type || null,
+      favorite: post.Favorite.length > 0,
       createdAt: post.createdAt,
+      ...(includeUserId && {
+        status: post.status,
+      }),
     }));
 
     return {
@@ -439,7 +470,7 @@ export class PostService {
         throw new HttpException('Already favorited', 400);
       }
 
-      tx.favorite.create({
+      await tx.favorite.create({
         data: {
           postId,
           userId,
@@ -477,7 +508,7 @@ export class PostService {
         throw new HttpException('Not favorited', 400);
       }
 
-      tx.favorite.delete({
+      await tx.favorite.delete({
         where: {
           id: exists.id,
         },

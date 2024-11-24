@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -37,11 +38,12 @@ export class CommentController {
   }
 
   @Patch(':id')
-  async update(
-    @GetCurrentUserId() userId: number,
-    @Body() dto: UpdateCommentDto,
-  ) {
-    return this.commentService.update(userId, dto);
+  async update(@Param('id') id: number, @Body() dto: UpdateCommentDto) {
+    if (!id) {
+      throw new NotFoundException();
+    }
+
+    return this.commentService.update(id, dto);
   }
 
   @Delete(':id')

@@ -154,6 +154,10 @@ export class AuthService {
   }
 
   async refreshToken(userId: number, refreshToken: string): Promise<TokenPair> {
+    console.log(
+      '🚀 ~ file: auth.service.ts:157 ~ AuthService ~ refreshToken ~ userId:',
+      userId,
+    );
     const { key } = await this.verifyRefreshToken(userId, refreshToken);
 
     const user = await this.userService.findOne({
@@ -232,7 +236,9 @@ export class AuthService {
     }
 
     const keys = await this.redis.keys(`${sub}:*`);
-    await this.redis.del(...keys);
+    if (!!keys.length) {
+      await this.redis.del(...keys);
+    }
 
     return {
       success: true,
@@ -242,6 +248,10 @@ export class AuthService {
   private async verifyRefreshToken(sub: number, refreshToken: string) {
     const key = `${sub}:${refreshToken}`;
     const dbToken = await this.redis.get(key);
+    console.log(
+      '🚀 ~ file: auth.service.ts:249 ~ AuthService ~ verifyRefreshToken ~ dbToken:',
+      dbToken,
+    );
 
     if (!dbToken) {
       throw new HttpException('Invalid refresh token', 403);

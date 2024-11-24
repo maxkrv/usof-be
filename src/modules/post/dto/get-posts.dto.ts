@@ -26,6 +26,11 @@ export class GetPostsDto {
   categoryId?: number;
 
   @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  userId?: number;
+
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
   fromDate?: Date;

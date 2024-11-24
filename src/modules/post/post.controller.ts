@@ -37,7 +37,7 @@ export class PostController {
   ) {
     if (!userId) return [];
 
-    return this.postService.findFavorites(userId, dto);
+    return this.postService.findFavorites(userId, dto, true);
   }
 
   @Post('favorites/:id')

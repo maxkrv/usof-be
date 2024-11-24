@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from 'src/shared/services/db.service';
 import { GetCommentDto } from './dto/get-comment-dto';
 import {
@@ -9,6 +9,7 @@ import { CommentResponse } from './interface/comment.interface';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ContentStatus } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class CommentService {
@@ -85,17 +86,29 @@ export class CommentService {
   }
 
   async update(id: number, dto: UpdateCommentDto): Promise<SuccessResponse> {
-    await this.dbService.comment.update({
-      where: {
-        id,
-      },
-      data: {
-        ...dto,
-        isEdited: true,
-      },
-    });
+    try {
+      await this.dbService.comment.update({
+        where: {
+          id,
+        },
+        data: {
+          content: dto.content,
+          isEdited: true,
+        },
+      });
 
-    return { success: true };
+      return {
+        success: true,
+      };
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException(`Comment with ID ${id} not found`);
+      }
+      throw error;
+    }
   }
 
   async delete(userId: number, id: number): Promise<SuccessResponse> {
