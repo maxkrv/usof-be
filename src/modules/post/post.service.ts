@@ -9,6 +9,7 @@ import { GetPostsDto } from './dto/get-posts.dto';
 import { ContentStatus, Prisma } from '@prisma/client';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { addDays } from 'date-fns';
 
 @Injectable()
 export class PostService {
@@ -52,7 +53,7 @@ export class PostService {
           ...((dto.fromDate || dto.toDate) && {
             createdAt: {
               gte: dto.fromDate,
-              lte: dto.toDate,
+              lte: addDays(dto.toDate, 1),
             },
           }),
         },
@@ -101,7 +102,7 @@ export class PostService {
           ...((dto.fromDate || dto.toDate) && {
             createdAt: {
               gte: dto.fromDate,
-              lte: dto.toDate,
+              lte: addDays(dto.toDate, 1),
             },
           }),
         },
@@ -112,11 +113,13 @@ export class PostService {
       id: post.id,
       title: post.title,
       content: post.content,
-      author: {
-        id: post.author.id,
-        username: post.author.username,
-        profilePicture: post.author.profilePicture,
-      },
+      author: post.author
+        ? {
+            id: post.author.id,
+            username: post.author.username,
+            profilePicture: post.author.profilePicture,
+          }
+        : null,
       categories: post.PostCategory.map(({ category }) => ({
         id: category.id,
         title: category.title,
@@ -140,11 +143,16 @@ export class PostService {
     };
   }
 
-  async findById(id: number, userId?: number) {
+  async findById(id: number, userId?: number, includeUserId = false) {
     const post = await this.dbService.post.findFirst({
       where: {
         id: id,
         isBlocked: false,
+        ...(includeUserId && {
+          author: {
+            id: userId,
+          },
+        }),
       },
       include: {
         _count: {
@@ -172,7 +180,7 @@ export class PostService {
       },
     });
 
-    const isUserAuthor = post?.author.id === userId;
+    const isUserAuthor = post?.author?.id === userId;
 
     if (!post) {
       return null;
@@ -186,11 +194,13 @@ export class PostService {
       id: post.id,
       title: post.title,
       content: post.content,
-      author: {
-        id: post.author.id,
-        username: post.author.username,
-        profilePicture: post.author.profilePicture,
-      },
+      author: post.author
+        ? {
+            id: post.author.id,
+            username: post.author.username,
+            profilePicture: post.author.profilePicture,
+          }
+        : null,
       categories: post.PostCategory.map(({ category }) => ({
         id: category.id,
         title: category.title,
@@ -361,7 +371,7 @@ export class PostService {
           ...((dto.fromDate || dto.toDate) && {
             createdAt: {
               gte: dto.fromDate,
-              lte: dto.toDate,
+              lte: addDays(dto.toDate, 1),
             },
           }),
         },
@@ -406,7 +416,7 @@ export class PostService {
           ...((dto.fromDate || dto.toDate) && {
             createdAt: {
               gte: dto.fromDate,
-              lte: dto.toDate,
+              lte: addDays(dto.toDate, 1),
             },
           }),
         },
@@ -417,11 +427,13 @@ export class PostService {
       id: post.id,
       title: post.title,
       content: post.content,
-      author: {
-        id: post.author.id,
-        username: post.author.username,
-        profilePicture: post.author.profilePicture,
-      },
+      author: post.author
+        ? {
+            id: post.author.id,
+            username: post.author.username,
+            profilePicture: post.author.profilePicture,
+          }
+        : null,
       categories: post.PostCategory.map(({ category }) => ({
         id: category.id,
         title: category.title,

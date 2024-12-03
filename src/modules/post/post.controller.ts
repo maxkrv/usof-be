@@ -78,6 +78,19 @@ export class PostController {
     return post;
   }
 
+  @Get('edit/:id')
+  async getEdit(@Param('id') id: number, @GetCurrentUserId() userId: number) {
+    if (!id) throw new HttpException('Post not found', 404);
+
+    const post = await this.postService.findById(id, userId, true);
+
+    if (!post) {
+      throw new HttpException('Post not found', 404);
+    }
+
+    return post;
+  }
+
   @Post()
   async create(@Body() dto: CreatePostDto, @GetCurrentUserId() userId: number) {
     return this.postService.create(dto, userId);

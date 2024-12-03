@@ -8,7 +8,7 @@ export interface PostResponse {
     id: number;
     username: string;
     profilePicture: string | null;
-  };
+  } | null;
   categories: { id: number; title: string }[];
   rating: number;
   myAction: ReactionType | null;

@@ -23,6 +23,7 @@ import {
   IMG_ALLOWED_TYPES,
   IMG_MAX_SIZE,
 } from 'src/shared/constants/constants';
+import { Public } from 'src/shared/decorators/public.decorator';
 
 @Controller('user')
 export class UserController {
@@ -34,6 +35,7 @@ export class UserController {
     return this.userService.findById(userId, true);
   }
 
+  @Public()
   @AllowNotActivated()
   @Get(':id')
   async getById(@Param('id') id: number) {

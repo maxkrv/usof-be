@@ -59,8 +59,8 @@ model Post {
   status       ContentStatus  @default(ACTIVE)
   isBlocked    Boolean        @default(false) @map("is_blocked")
   rating       Int            @default(0)
-  author       User           @relation(fields: [userId], references: [id])
-  userId       Int            @map("user_id")
+  author       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId       Int?           @map("user_id")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
   PostCategory PostCategory[]
@@ -92,11 +92,11 @@ model PostCategory {
 }
 
 model Favorite {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
-  postId    Int      @map("post_id")
-  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     Int  @id @default(autoincrement())
+  userId Int  @map("user_id")
+  postId Int  @map("post_id")
+  Post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("favorites")
 }
@@ -111,8 +111,8 @@ model Comment {
   updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
   Post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int           @map("post_id")
-  User      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int           @map("user_id")
+  User      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId    Int?          @map("user_id")
   Reaction  Reaction[]
 
   @@map("comments")
@@ -121,7 +121,7 @@ model Comment {
 model Reaction {
   id        Int          @id @default(autoincrement())
   type      ReactionType
-  User      User?        @relation(fields: [userId], references: [id])
+  User      User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int?         @map("user_id")
   Post      Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int?         @map("post_id")
